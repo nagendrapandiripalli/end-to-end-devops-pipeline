@@ -1,0 +1,62 @@
+pipeline {
+    agent any
+
+    environment {
+        DOCKER_IMAGE = "myapp"
+        DOCKER_TAG = "${env.BUILD_NUMBER}"
+        REGISTRY = "your-docker-registry.com"
+    }
+
+    stages {
+
+        stage('Checkout') {
+            steps {
+                git branch: 'main', url: 'https://github.com/nagendrapandiripalli/sample-app.git'
+            }
+        }
+
+        stage('Build') {
+            steps {
+                sh 'mvn clean package -DskipTests'
+            }
+        }
+
+        stage('Test') {
+            steps {
+                sh 'mvn test'
+            }
+            post {
+                always {
+                    junit '**/target/surefire-reports/*.xml'
+                }
+            }
+        }
+
+        stage('Docker Build & Push') {
+            steps {
+                sh """
+                    docker build -t ${REGISTRY}/${DOCKER_IMAGE}:${DOCKER_TAG} .
+                    docker push ${REGISTRY}/${DOCKER_IMAGE}:${DOCKER_TAG}
+                """
+            }
+        }
+
+        stage('Deploy') {
+            steps {
+                sh """
+                    kubectl set image deployment/myapp-deployment \
+                    myapp=${REGISTRY}/${DOCKER_IMAGE}:${DOCKER_TAG} --record
+                """
+            }
+        }
+    }
+
+    post {
+        success {
+            echo 'Pipeline completed successfully!'
+        }
+        failure {
+            echo 'Pipeline failed. Check logs for details.'
+        }
+    }
+}

@@ -1,0 +1,39 @@
+groups:
+  - name: infrastructure_alerts
+    rules:
+
+      - alert: HighCPUUsage
+        expr: 100 - (avg by(instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 85
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High CPU usage on {{ $labels.instance }}"
+          description: "CPU usage is above 85% for more than 5 minutes."
+
+      - alert: HighMemoryUsage
+        expr: (node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes) / node_memory_MemTotal_bytes * 100 > 85
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High memory usage on {{ $labels.instance }}"
+          description: "Memory usage is above 85% for more than 5 minutes."
+
+      - alert: DiskSpaceLow
+        expr: (node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"}) * 100 < 15
+        for: 10m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Low disk space on {{ $labels.instance }}"
+          description: "Disk space is below 15% on the root filesystem. Investigate before it fills up."
+
+      - alert: ServiceDown
+        expr: up == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Service down on {{ $labels.instance }}"
+          description: "The target has been unreachable for more than 2 minutes."

@@ -1,0 +1,11 @@
+---
+app_install_dir: /opt/myapp
+app_service_name: myapp
+app_env: production
+app_name: myapp
+app_port: 8080
+log_level: info
+
+db_host: localhost
+db_port: 5432
+db_name: myapp_db
