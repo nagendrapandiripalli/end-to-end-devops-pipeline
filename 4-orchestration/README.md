@@ -32,3 +32,21 @@ initialization without liveness-triggered restarts, then become ready after
 `/healthz` succeeds. Also test an application that never returns success: it
 should restart after the startup budget. These require a running test cluster;
 manifest parsing alone does not verify runtime behavior.
+
+## Voluntary disruption protection
+
+Apply `pdb.yaml` in the same namespace as the Deployment to require two ready
+replicas during voluntary evictions such as a node drain. The example has
+three replicas. Revisit the budget before scaling below three: with only two
+healthy replicas, voluntary eviction is blocked. A PDB does not prevent node
+failures or govern Deployment rolling updates.
+
+```sh
+kubectl apply --dry-run=server -f 4-orchestration/pdb.yaml
+kubectl apply -f 4-orchestration/pdb.yaml
+kubectl get pdb myapp-pdb
+```
+
+With three healthy matching pods, expect one allowed disruption. Validate
+evictions only in a disposable cluster; never drain shared production nodes
+for this demonstration.
