@@ -1,0 +1,23 @@
+# Terraform local state, caches and sensitive variable values
+**/.terraform/
+*.tfstate
+*.tfstate.*
+*.tfplan
+*.tfvars
+*.tfvars.json
+!*.tfvars.example
+!*.tfvars.json.example
+# Keep .terraform.lock.hcl tracked for reproducibility.
+
+# Local credentials and environment files
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+kubeconfig
+
+# Generated application artifacts
+**/target/
+__pycache__/
+*.py[cod]
