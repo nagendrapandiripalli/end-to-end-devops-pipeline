@@ -48,3 +48,15 @@ class ConfigTests(unittest.TestCase):
     def test_bad_ingress(self):
         self.change("4-orchestration/ingress.yaml", lambda d: d["spec"]["rules"][0]["http"]["paths"][0]["backend"]["service"].update(name="wrong"))
         self.assertIn("Ingress backend does not match Service", validate(self.root))
+
+    def test_boolean_budget(self):
+        self.change("4-orchestration/pdb.yaml", lambda d: d["spec"].update(minAvailable=True))
+        self.assertIn("PDB must leave room for a voluntary disruption", validate(self.root))
+
+    def test_boolean_replicas(self):
+        self.change("4-orchestration/deployment.yaml", lambda d: d["spec"].update(replicas=True))
+        self.assertIn("PDB must leave room for a voluntary disruption", validate(self.root))
+
+    def test_bad_deployment_selector(self):
+        self.change("4-orchestration/deployment.yaml", lambda d: d["spec"]["selector"]["matchLabels"].update(app="wrong"))
+        self.assertIn("Deployment selector does not match pod labels", validate(self.root))

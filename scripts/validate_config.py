@@ -15,7 +15,7 @@ def validate(root):
         ingress = load("4-orchestration/ingress.yaml")
         pdb = load("4-orchestration/pdb.yaml")["spec"]
         labels = d["template"]["metadata"]["labels"]
-        for name, selector in [("Service", s["spec"]["selector"]), ("PDB", pdb["selector"]["matchLabels"])]:
+        for name, selector in [("Deployment", d["selector"]["matchLabels"]), ("Service", s["spec"]["selector"]), ("PDB", pdb["selector"]["matchLabels"])]:
             if not selector or any(labels.get(k) != v for k, v in selector.items()):
                 errors.append(f"{name} selector does not match pod labels")
         ports = {p["containerPort"] for c in d["template"]["spec"]["containers"] for p in c.get("ports", [])}
@@ -27,7 +27,7 @@ def validate(root):
                 backend = path["backend"]["service"]
                 if backend["name"] != s["metadata"]["name"] or backend["port"]["number"] not in {p["port"] for p in s["spec"]["ports"]}:
                     errors.append("Ingress backend does not match Service")
-        if not isinstance(pdb["minAvailable"], int) or not 0 < pdb["minAvailable"] < d["replicas"]:
+        if type(d["replicas"]) is not int or type(pdb["minAvailable"]) is not int or not 0 < pdb["minAvailable"] < d["replicas"]:
             errors.append("PDB must leave room for a voluntary disruption")
         config_path = root / "5-monitoring/prometheus/prometheus.yml"
         config = yaml.safe_load(config_path.read_text(encoding="utf-8"))
