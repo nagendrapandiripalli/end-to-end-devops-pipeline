@@ -3,8 +3,5 @@
   hosts: app_servers
   become: yes
 
-  vars_files:
-    - roles/app_deploy/vars/main.yml
-
   roles:
     - app_deploy
