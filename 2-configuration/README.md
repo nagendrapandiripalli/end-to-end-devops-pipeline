@@ -32,3 +32,19 @@ Vault or an approved secret store; do not commit them in inventory examples.
 This role configures an existing application service; it does not install the
 application binary or create a service unit. Provision those before using it.
 Package installation currently targets Debian-family hosts.
+
+## Automated syntax validation
+
+GitHub Actions installs the version in requirements-ci.txt and runs:
+
+    ansible-playbook -i inventory-ci.ini playbook.yml --syntax-check
+
+The isolated inventory avoids dependence on private server addresses or SSH
+credentials. Syntax checking parses the playbook and role without executing
+tasks, installing packages or restarting services. Never use this inventory
+for an actual deployment: it points at the local machine.
+
+This catches Ansible syntax and module-resolution errors, but does not verify
+service availability, template output or runtime idempotency. Those still
+require a disposable target environment. Upgrade the pinned checker version
+deliberately and verify syntax again when upgrading deployment Ansible.
