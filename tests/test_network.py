@@ -31,3 +31,22 @@ class NetworkTests(unittest.TestCase):
     def test_small_subnet(self):
         self.data["public_subnet_cidrs"] = ["10.0.1.0/29"]
         self.assertIn("Invalid AWS IPv4 subnet prefix", validate(self.data))
+
+    def test_non_object_input(self):
+        for value in [None, [], 42, "network"]:
+            with self.subTest(value=value):
+                self.assertEqual(validate(value), ["Network input must be a JSON object"])
+
+    def test_non_text_vpc(self):
+        for value in [None, True, 167772160, ["10.0.0.0", 16]]:
+            with self.subTest(value=value):
+                self.data["vpc_cidr"] = value
+                self.assertEqual(validate(self.data), ["vpc_cidr must be a CIDR string"])
+
+    def test_non_text_subnet(self):
+        for key in ["public_subnet_cidrs", "private_subnet_cidrs"]:
+            for value in [None, True, 167772416, ["10.0.1.0", 24]]:
+                with self.subTest(key=key, value=value):
+                    self.setUp()
+                    self.data[key] = [value]
+                    self.assertIn(f"{key} entries must be CIDR strings", validate(self.data))

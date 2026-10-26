@@ -6,6 +6,10 @@ from pathlib import Path
 
 def validate(data):
     errors = []
+    if not isinstance(data, dict):
+        return ["Network input must be a JSON object"]
+    if not isinstance(data.get("vpc_cidr"), str):
+        return ["vpc_cidr must be a CIDR string"]
     try:
         vpc = ipaddress.IPv4Network(data["vpc_cidr"], strict=True)
         azs = data["azs"]
@@ -22,6 +26,9 @@ def validate(data):
             if len(cidrs) > len(azs):
                 errors.append("Subnet count exceeds zone count")
             for cidr in cidrs:
+                if not isinstance(cidr, str):
+                    errors.append(f"{key} entries must be CIDR strings")
+                    continue
                 net = ipaddress.IPv4Network(cidr, strict=True)
                 if not net.subnet_of(vpc):
                     errors.append("Subnet outside VPC")
