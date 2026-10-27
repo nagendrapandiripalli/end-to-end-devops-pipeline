@@ -15,3 +15,10 @@ they are not a general Kubernetes schema validator or PromQL evaluator. Run
 server-side Kubernetes validation and promtool checks in your deployment
 environment. Jenkins execution, application health and live metrics still need
 integration testing.
+
+## Platform coverage
+
+GitHub Actions runs the configuration checker, network example and full Python
+test suite on both Ubuntu and Windows using Python 3.12. Matrix fail-fast is
+disabled so a failure on one platform does not hide the other result. The
+Ansible syntax check remains Linux-only, separate from these portable scripts.
