@@ -6,7 +6,8 @@ python scripts/validate_config.py
 python -m unittest discover -s tests -v
 ```
 
-Checks the example Service/Deployment/Ingress relationships, integer PDB budget,
+Checks the example Service/Deployment/Ingress relationships, numeric port types
+and range (1–65535), integer PDB budget,
 Prometheus rule file references and Grafana JSON syntax without cloud credentials.
 Tests mutate temporary copies to verify common mistakes are rejected.
 

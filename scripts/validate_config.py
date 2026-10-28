@@ -9,6 +9,10 @@ def validate(root):
     errors = []
     def load(path):
         return yaml.safe_load((root / path).read_text(encoding="utf-8"))
+    def check_port(value, field):
+        if type(value) is not int or not 1 <= value <= 65535:
+            errors.append(f"{field} must be an integer from 1 to 65535")
+
     try:
         d = load("4-orchestration/deployment.yaml")["spec"]
         s = load("4-orchestration/service.yaml")
@@ -18,13 +22,19 @@ def validate(root):
         for name, selector in [("Deployment", d["selector"]["matchLabels"]), ("Service", s["spec"]["selector"]), ("PDB", pdb["selector"]["matchLabels"])]:
             if not selector or any(labels.get(k) != v for k, v in selector.items()):
                 errors.append(f"{name} selector does not match pod labels")
+        for container in d["template"]["spec"]["containers"]:
+            for port in container.get("ports", []):
+                check_port(port["containerPort"], "containerPort")
         ports = {p["containerPort"] for c in d["template"]["spec"]["containers"] for p in c.get("ports", [])}
         for port in s["spec"]["ports"]:
+            check_port(port["port"], "Service port")
+            check_port(port["targetPort"], "Service targetPort")
             if port["targetPort"] not in ports:
                 errors.append("Service targetPort is not an exposed container port")
         for rule in ingress["spec"]["rules"]:
             for path in rule["http"]["paths"]:
                 backend = path["backend"]["service"]
+                check_port(backend["port"]["number"], "Ingress backend port")
                 if backend["name"] != s["metadata"]["name"] or backend["port"]["number"] not in {p["port"] for p in s["spec"]["ports"]}:
                     errors.append("Ingress backend does not match Service")
         if type(d["replicas"]) is not int or type(pdb["minAvailable"]) is not int or not 0 < pdb["minAvailable"] < d["replicas"]:

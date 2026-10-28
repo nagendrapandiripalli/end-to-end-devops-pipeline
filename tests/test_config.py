@@ -60,3 +60,23 @@ class ConfigTests(unittest.TestCase):
     def test_bad_deployment_selector(self):
         self.change("4-orchestration/deployment.yaml", lambda d: d["spec"]["selector"]["matchLabels"].update(app="wrong"))
         self.assertIn("Deployment selector does not match pod labels", validate(self.root))
+
+    def test_invalid_numeric_ports(self):
+        # Keep references consistent: relational equality alone must not pass
+        # invalid ports, including Python's True == 1 and 8080.0 == 8080.
+        for value in [True, False, 0, -1, 65536, 8080.0, "8080", None]:
+            with self.subTest(value=value):
+                self.change("4-orchestration/deployment.yaml", lambda d: d["spec"]["template"]["spec"]["containers"][0]["ports"][0].update(containerPort=value))
+                self.change("4-orchestration/service.yaml", lambda d: d["spec"]["ports"][0].update(port=value, targetPort=value))
+                self.change("4-orchestration/ingress.yaml", lambda d: d["spec"]["rules"][0]["http"]["paths"][0]["backend"]["service"]["port"].update(number=value))
+                errors = validate(self.root)
+                for field in ["containerPort", "Service port", "Service targetPort", "Ingress backend port"]:
+                    self.assertIn(f"{field} must be an integer from 1 to 65535", errors)
+
+    def test_numeric_port_boundaries(self):
+        for value in [1, 65535]:
+            with self.subTest(value=value):
+                self.change("4-orchestration/deployment.yaml", lambda d: d["spec"]["template"]["spec"]["containers"][0]["ports"][0].update(containerPort=value))
+                self.change("4-orchestration/service.yaml", lambda d: d["spec"]["ports"][0].update(port=value, targetPort=value))
+                self.change("4-orchestration/ingress.yaml", lambda d: d["spec"]["rules"][0]["http"]["paths"][0]["backend"]["service"]["port"].update(number=value))
+                self.assertEqual(validate(self.root), [])
