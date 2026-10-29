@@ -25,6 +25,16 @@ def validate(root):
         for container in d["template"]["spec"]["containers"]:
             for port in container.get("ports", []):
                 check_port(port["containerPort"], "containerPort")
+            container_ports = [p["containerPort"] for p in container.get("ports", [])]
+            for name in ["startupProbe", "readinessProbe", "livenessProbe"]:
+                probe = container.get(name)
+                if not probe or "httpGet" not in probe:
+                    errors.append(f"{name} must define an HTTP health check")
+                    continue
+                port = probe["httpGet"]["port"]
+                check_port(port, f"{name} port")
+                if port not in container_ports:
+                    errors.append(f"{name} port must match its container port")
         ports = {p["containerPort"] for c in d["template"]["spec"]["containers"] for p in c.get("ports", [])}
         for port in s["spec"]["ports"]:
             check_port(port["port"], "Service port")

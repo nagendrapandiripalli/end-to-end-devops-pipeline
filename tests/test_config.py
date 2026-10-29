@@ -79,4 +79,27 @@ class ConfigTests(unittest.TestCase):
                 self.change("4-orchestration/deployment.yaml", lambda d: d["spec"]["template"]["spec"]["containers"][0]["ports"][0].update(containerPort=value))
                 self.change("4-orchestration/service.yaml", lambda d: d["spec"]["ports"][0].update(port=value, targetPort=value))
                 self.change("4-orchestration/ingress.yaml", lambda d: d["spec"]["rules"][0]["http"]["paths"][0]["backend"]["service"]["port"].update(number=value))
+                def update_probes(d):
+                    c = d["spec"]["template"]["spec"]["containers"][0]
+                    for name in ["startupProbe", "readinessProbe", "livenessProbe"]:
+                        c[name]["httpGet"]["port"] = value
+                self.change("4-orchestration/deployment.yaml", update_probes)
                 self.assertEqual(validate(self.root), [])
+
+    def test_probe_port_mismatch(self):
+        for name in ["startupProbe", "readinessProbe", "livenessProbe"]:
+            with self.subTest(probe=name):
+                self.change("4-orchestration/deployment.yaml", lambda d: d["spec"]["template"]["spec"]["containers"][0][name]["httpGet"].update(port=9090))
+                self.assertIn(f"{name} port must match its container port", validate(self.root))
+
+    def test_missing_probe(self):
+        for name in ["startupProbe", "readinessProbe", "livenessProbe"]:
+            with self.subTest(probe=name):
+                self.change("4-orchestration/deployment.yaml", lambda d: d["spec"]["template"]["spec"]["containers"][0].pop(name))
+                self.assertIn(f"{name} must define an HTTP health check", validate(self.root))
+
+    def test_invalid_probe_port(self):
+        for value in [True, 0, 65536, "8080", 8080.0]:
+            with self.subTest(port=value):
+                self.change("4-orchestration/deployment.yaml", lambda d: d["spec"]["template"]["spec"]["containers"][0]["startupProbe"]["httpGet"].update(port=value))
+                self.assertIn("startupProbe port must be an integer from 1 to 65535", validate(self.root))

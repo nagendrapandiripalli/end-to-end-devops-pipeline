@@ -23,3 +23,8 @@ GitHub Actions runs the configuration checker, network example and full Python
 test suite on both Ubuntu and Windows using Python 3.12. Matrix fail-fast is
 disabled so a failure on one platform does not hide the other result. The
 Ansible syntax check remains Linux-only, separate from these portable scripts.
+
+The example requires HTTP startup, readiness and liveness probes. Each numeric
+probe port must match a port declared by its own container; this catches stale
+health-check ports after application port changes. Other valid Kubernetes probe
+types and named ports are outside this example checker's scope.
