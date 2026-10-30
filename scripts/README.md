@@ -13,8 +13,7 @@ Tests mutate temporary copies to verify common mistakes are rejected.
 
 These checks target this repository's numeric ports and integer PDB convention;
 they are not a general Kubernetes schema validator or PromQL evaluator. Run
-server-side Kubernetes validation and promtool checks in your deployment
-environment. Jenkins execution, application health and live metrics still need
+server-side Kubernetes validation in your deployment environment. Jenkins execution, application health and live metrics still need
 integration testing.
 
 ## Platform coverage
@@ -28,3 +27,17 @@ The example requires HTTP startup, readiness and liveness probes. Each numeric
 probe port must match a port declared by its own container; this catches stale
 health-check ports after application port changes. Other valid Kubernetes probe
 types and named ports are outside this example checker's scope.
+
+## Native Prometheus validation
+
+A separate Linux CI job runs Prometheus 3.2.1's promtool in its official container
+to validate the configuration and referenced alert rules, including PromQL and
+annotation templates. The configuration directory is mounted read-only; no
+Prometheus server or cloud resources are started. Docker must be available to
+repeat this check locally:
+
+```sh
+docker run --rm --entrypoint /bin/promtool -v "$PWD/5-monitoring/prometheus:/etc/prometheus:ro" prom/prometheus:v3.2.1 check config /etc/prometheus/prometheus.yml
+```
+
+This checks syntax, not live scrape connectivity or alert behavior over time.

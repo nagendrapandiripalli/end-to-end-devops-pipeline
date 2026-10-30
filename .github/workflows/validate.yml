@@ -34,3 +34,14 @@ jobs:
       - name: Validate playbook and role syntax without executing tasks
         working-directory: 2-configuration
         run: ansible-playbook -i inventory-ci.ini playbook.yml --syntax-check
+
+  prometheus:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate Prometheus configuration and PromQL rules
+        run: |
+          docker run --rm --entrypoint /bin/promtool \
+            -v "$PWD/5-monitoring/prometheus:/etc/prometheus:ro" \
+            prom/prometheus:v3.2.1 check config /etc/prometheus/prometheus.yml
