@@ -1,0 +1,29 @@
+rule_files:
+  - alert_rules.yml
+evaluation_interval: 1m
+tests:
+  - name: ServiceDown waits two minutes and resolves after recovery
+    interval: 1m
+    input_series:
+      - series: 'up{job="application",instance="localhost:8080"}'
+        values: '1 0 0 0 1'
+    alert_rule_test:
+      - eval_time: 0m
+        alertname: ServiceDown
+        exp_alerts: []
+      - eval_time: 2m
+        alertname: ServiceDown
+        exp_alerts: []
+      - eval_time: 3m
+        alertname: ServiceDown
+        exp_alerts:
+          - exp_labels:
+              job: application
+              instance: localhost:8080
+              severity: critical
+            exp_annotations:
+              summary: "Service down on localhost:8080"
+              description: "The target has been unreachable for more than 2 minutes."
+      - eval_time: 4m
+        alertname: ServiceDown
+        exp_alerts: []

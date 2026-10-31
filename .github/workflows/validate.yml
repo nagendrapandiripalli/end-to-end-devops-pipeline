@@ -45,3 +45,9 @@ jobs:
           docker run --rm --entrypoint /bin/promtool \
             -v "$PWD/5-monitoring/prometheus:/etc/prometheus:ro" \
             prom/prometheus:v3.2.1 check config /etc/prometheus/prometheus.yml
+      - name: Test alert firing delay and recovery
+        run: |
+          docker run --rm --entrypoint /bin/promtool \
+            -v "$PWD/5-monitoring/prometheus:/etc/prometheus:ro" \
+            -w /etc/prometheus \
+            prom/prometheus:v3.2.1 test rules alert_rules_test.yml

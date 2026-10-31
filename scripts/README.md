@@ -41,3 +41,11 @@ docker run --rm --entrypoint /bin/promtool -v "$PWD/5-monitoring/prometheus:/etc
 ```
 
 This checks syntax, not live scrape connectivity or alert behavior over time.
+
+## Alert behavior regression test
+
+CI also runs promtool rule tests with synthetic samples. ServiceDown must stay
+inactive while healthy, wait for its two-minute pending period, fire with the
+expected labels and annotations, then resolve after the target recovers.
+This validates the rule without a running Prometheus server. It does not
+verify exporter reachability or Alertmanager notification delivery.
