@@ -49,3 +49,7 @@ inactive while healthy, wait for its two-minute pending period, fire with the
 expected labels and annotations, then resolve after the target recovers.
 This validates the rule without a running Prometheus server. It does not
 verify exporter reachability or Alertmanager notification delivery.
+
+HighMemoryUsage tests cover the strict 85% boundary, the five-minute pending
+period, warning labels and annotations, and recovery below the threshold.
+Synthetic data checks rule behavior without allocating real memory or cloud resources.

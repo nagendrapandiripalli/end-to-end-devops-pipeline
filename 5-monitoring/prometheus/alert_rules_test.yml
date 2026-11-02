@@ -27,3 +27,43 @@ tests:
       - eval_time: 4m
         alertname: ServiceDown
         exp_alerts: []
+
+  - name: HighMemoryUsage threshold pending period and recovery
+    interval: 1m
+    input_series:
+      - series: 'node_memory_MemTotal_bytes{instance="node1",job="node_exporter"}'
+        values: '100 100 100 100 100 100 100 100'
+      - series: 'node_memory_MemAvailable_bytes{instance="node1",job="node_exporter"}'
+        values: '15 10 10 10 10 10 10 20'
+    alert_rule_test:
+      - eval_time: 0m
+        alertname: HighMemoryUsage
+        exp_alerts: []
+      - eval_time: 5m
+        alertname: HighMemoryUsage
+        exp_alerts: []
+      - eval_time: 6m
+        alertname: HighMemoryUsage
+        exp_alerts:
+          - exp_labels:
+              instance: node1
+              job: node_exporter
+              severity: warning
+            exp_annotations:
+              summary: "High memory usage on node1"
+              description: "Memory usage is above 85% for more than 5 minutes."
+      - eval_time: 7m
+        alertname: HighMemoryUsage
+        exp_alerts: []
+
+  - name: HighMemoryUsage does not fire at exactly 85 percent
+    interval: 1m
+    input_series:
+      - series: 'node_memory_MemTotal_bytes{instance="node1",job="node_exporter"}'
+        values: '100+0x10'
+      - series: 'node_memory_MemAvailable_bytes{instance="node1",job="node_exporter"}'
+        values: '15+0x10'
+    alert_rule_test:
+      - eval_time: 10m
+        alertname: HighMemoryUsage
+        exp_alerts: []
